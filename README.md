@@ -3,7 +3,7 @@
 This is a mobile application built using React Native (Expo) and TypeScript.
 It helps users add, view, and manage investments in one place.
 
-Features
+#Features
 
 Login and Register screens
 
@@ -17,7 +17,7 @@ Profile screen
 
 Clean UI with smooth navigation
 
-Tech Used
+#Tech Used
 
 React Native
 
@@ -27,7 +27,7 @@ TypeScript
 
 Context API
 
-How to Run
+#How to Run
 
 Install packages
 
