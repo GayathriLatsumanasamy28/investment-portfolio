@@ -1,98 +1,196 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useMemo } from 'react';
+import { colors } from '../../src/theme/colors';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+/* ------------------ TEMP DATA (UI WORKING STATE) ------------------ */
+const investments = [
+  { id: 1, name: 'Stocks', amount: 50000, returns: 12 },
+  { id: 2, name: 'Mutual Funds', amount: 30000, returns: 8 },
+  { id: 3, name: 'Crypto', amount: 20000, returns: -5 },
+];
 
-export default function HomeScreen() {
+/* ------------------ PROGRESS BAR COMPONENT ------------------ */
+function ProgressBar({ percent }: { percent: number }) {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.barContainer}>
+      <View
+        style={[
+          styles.barFill,
+          { width: `${Math.max(0, Math.min(percent, 100))}%` },
+        ]}
+      />
+    </View>
   );
 }
 
+/* ------------------ DASHBOARD ------------------ */
+export default function Dashboard() {
+  const totalInvested = useMemo(
+    () => investments.reduce((sum, i) => sum + i.amount, 0),
+    []
+  );
+
+  const avgReturn = useMemo(
+    () =>
+      investments.length
+        ? (
+            investments.reduce((sum, i) => sum + i.returns, 0) /
+            investments.length
+          ).toFixed(1)
+        : '0',
+    []
+  );
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      {/* HEADER */}
+      <Text style={styles.header}>Dashboard</Text>
+
+      {/* SUMMARY */}
+      <View style={styles.summaryRow}>
+        <SummaryCard label="Total Invested" value={`₹ ${totalInvested}`} />
+        <SummaryCard label="Investments" value={investments.length.toString()} />
+        <SummaryCard label="Avg Return" value={`${avgReturn}%`} />
+      </View>
+
+      {/* PERFORMANCE TREND */}
+      <Section title="Performance Trend">
+        {investments.map((item) => (
+          <View key={item.id} style={styles.row}>
+            <Text style={styles.rowLabel}>{item.name}</Text>
+            <Text style={styles.rowValue}>{item.returns}%</Text>
+            <ProgressBar percent={item.returns + 20} />
+          </View>
+        ))}
+      </Section>
+
+      {/* ASSET ALLOCATION */}
+      <Section title="Asset Allocation">
+        {investments.map((item) => {
+          const percent = (item.amount / totalInvested) * 100;
+
+          return (
+            <View key={item.id} style={styles.row}>
+              <Text style={styles.rowLabel}>
+                {item.name} ({percent.toFixed(0)}%)
+              </Text>
+              <ProgressBar percent={percent} />
+            </View>
+          );
+        })}
+      </Section>
+    </ScrollView>
+  );
+}
+
+/* ------------------ REUSABLE COMPONENTS ------------------ */
+function SummaryCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.summaryCard}>
+      <Text style={styles.summaryLabel}>{label}</Text>
+      <Text style={styles.summaryValue}>{value}</Text>
+    </View>
+  );
+}
+
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {children}
+    </View>
+  );
+}
+
+/* ------------------ STYLES ------------------ */
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    padding: 16,
+    backgroundColor: colors.background,
+  },
+
+  header: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.textDark,
+    marginBottom: 16,
+  },
+
+  summaryRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+
+  summaryCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: 14,
+    padding: 14,
+    marginHorizontal: 4,
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+
+  summaryLabel: {
+    fontSize: 13,
+    color: colors.textLight,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+
+  summaryValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textDark,
+    marginTop: 6,
+  },
+
+  section: {
+    marginBottom: 24,
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+    color: colors.textDark,
+  },
+
+  row: {
+    marginBottom: 12,
+  },
+
+  rowLabel: {
+    fontSize: 14,
+    color: colors.textDark,
+    marginBottom: 4,
+  },
+
+  rowValue: {
+    fontSize: 12,
+    color: colors.textLight,
+    marginBottom: 4,
+  },
+
+  barContainer: {
+    height: 10,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+
+  barFill: {
+    height: '100%',
+    backgroundColor: colors.success,
   },
 });
